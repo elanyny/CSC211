@@ -1,0 +1,206 @@
+import java.util.*;
+import java.util.stream.Collectors;
+
+// Base Product class
+class Product {
+    private String name;
+    private double price;
+    private String category;
+
+    public Product(String name, double price, String category) {
+        this.name = name;
+        this.price = price;
+        this.category = category;
+    }
+
+    public String getName() { return name; }
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price; }
+    public String getCategory() { return category; }
+
+    @Override
+    public String toString() {
+        return name + " - $" + price + " [" + category + "]";
+    }
+}
+
+// Subclasses of Product
+class Electronics extends Product {
+    private int warrantyPeriod;
+
+    public Electronics(String name, double price, int warrantyPeriod) {
+        super(name, price, "Electronics");
+        this.warrantyPeriod = warrantyPeriod;
+    }
+
+    public int getWarrantyPeriod() { return warrantyPeriod; }
+}
+
+class Clothing extends Product {
+    private String size;
+    private String material;
+
+    public Clothing(String name, double price, String size, String material) {
+        super(name, price, "Clothing");
+        this.size = size;
+        this.material = material;
+    }
+
+    public String getSize() { return size; }
+    public String getMaterial() { return material; }
+}
+
+class Grocery extends Product {
+    private String expiryDate;
+    private boolean perishable;
+
+    public Grocery(String name, double price, String expiryDate, boolean perishable) {
+        super(name, price, "Grocery");
+        this.expiryDate = expiryDate;
+        this.perishable = perishable;
+    }
+
+    public String getExpiryDate() { return expiryDate; }
+    public boolean isPerishable() { return perishable; }
+}
+
+// Base User class
+class User {
+    private String username;
+    private String email;
+
+    public User(String username, String email) {
+        this.username = username;
+        this.email = email;
+    }
+
+    public String getUsername() { return username; }
+    public String getEmail() { return email; }
+}
+
+// Subclass Customer
+class Customer extends User {
+    private List<Product> cart;
+
+    public Customer(String username, String email) {
+        super(username, email);
+        this.cart = new ArrayList<>();
+    }
+
+    public void addToCart(Product product) {
+        cart.add(product);
+        System.out.println(product.getName() + " added to the cart.");
+    }
+
+    public void viewCart() {
+        System.out.println("Cart Items:");
+        cart.forEach(System.out::println);
+    }
+
+    public List<Product> getCart() { return cart; }
+}
+
+// Subclass Admin
+class Admin extends User {
+    public Admin(String username, String email) {
+        super(username, email);
+    }
+
+    public void addProduct(List<Product> products, Product product) {
+        products.add(product);
+        System.out.println(product.getName() + " added to the product list.");
+    }
+
+    public void removeProduct(List<Product> products, Product product) {
+        products.remove(product);
+        System.out.println(product.getName() + " removed from the product list.");
+    }
+}
+
+// Order class
+class Order {
+    private List<Product> orderItems;
+    private double totalPrice;
+
+    public Order() {
+        this.orderItems = new ArrayList<>();
+        this.totalPrice = 0;
+    }
+
+    public void addProduct(Product product) {
+        orderItems.add(product);
+        System.out.println(product.getName() + " added to the order.");
+    }
+
+    public void calculateTotal() {
+        totalPrice = orderItems.stream().mapToDouble(Product::getPrice).sum();
+    }
+
+    public void applyTax(double taxRate) {
+        totalPrice += totalPrice * taxRate;
+    }
+
+    public void applyShippingFee(double fee) {
+        totalPrice += fee;
+    }
+
+    public double getTotalPrice() {
+        return totalPrice;
+    }
+
+    public void displayOrderItems() {
+        System.out.println("Order Items:");
+        orderItems.forEach(System.out::println);
+    }
+}
+
+// Main E-commerce Platform
+public class ECommercePlatform {
+    public static void main(String[] args) {
+        // Product List
+        List<Product> products = new ArrayList<>();
+        products.add(new Electronics("Laptop", 1200, 24));
+        products.add(new Clothing("Jeans", 50, "L", "Denim"));
+        products.add(new Grocery("Apple", 2, "2024-12-31", true));
+
+        // Admin functionality
+        Admin admin = new Admin("admin1", "admin@ecommerce.com");
+        admin.addProduct(products, new Electronics("Smartphone", 800, 12));
+        admin.removeProduct(products, products.get(0)); // Remove Laptop
+
+        // Customer functionality
+        Customer customer = new Customer("john_doe", "john@example.com");
+        customer.addToCart(products.get(0)); // Add Smartphone
+        customer.addToCart(products.get(1)); // Add Jeans
+        customer.viewCart();
+
+        // Filter Products by Category
+        List<Product> electronics = products.stream()
+            .filter(product -> product.getCategory().equalsIgnoreCase("Electronics"))
+            .collect(Collectors.toList());
+        System.out.println("\nFiltered Electronics:");
+        electronics.forEach(System.out::println);
+
+        // Sort Products by Price
+        products.sort(Comparator.comparingDouble(Product::getPrice));
+        System.out.println("\nSorted Products by Price:");
+        products.forEach(System.out::println);
+
+        // Search for a Product
+        String searchKeyword = "Jeans";
+        List<Product> searchResults = products.stream()
+            .filter(product -> product.getName().toLowerCase().contains(searchKeyword.toLowerCase()))
+            .collect(Collectors.toList());
+        System.out.println("\nSearch Results for '" + searchKeyword + "':");
+        searchResults.forEach(System.out::println);
+
+        // Create an Order
+        Order order = new Order();
+        customer.getCart().forEach(order::addProduct);
+        order.calculateTotal();
+        order.applyTax(0.1); // 10% Tax
+        order.applyShippingFee(20); // $20 Shipping Fee
+        System.out.println("\nOrder Total: $" + order.getTotalPrice());
+        order.displayOrderItems();
+    }
+}
