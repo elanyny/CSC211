@@ -1,7 +1,6 @@
 import java.util.*;
 import java.util.stream.Collectors;
 
-// Base Product class
 class Product {
     private String name;
     private double price;
@@ -15,109 +14,115 @@ class Product {
 
     public String getName() { return name; }
     public double getPrice() { return price; }
-    public void setPrice(double price) { this.price = price; }
     public String getCategory() { return category; }
 
     @Override
     public String toString() {
-        return name + " - $" + price + " [" + category + "]";
+        return name + " - $" + String.format("%.2f", price) + " (" + category + ")";
     }
 }
 
-// Subclasses of Product
 class Electronics extends Product {
-    private int warrantyPeriod;
+    private int warrantyMonths;
 
-    public Electronics(String name, double price, int warrantyPeriod) {
+    public Electronics(String name, double price, int warrantyMonths) {
         super(name, price, "Electronics");
-        this.warrantyPeriod = warrantyPeriod;
+        this.warrantyMonths = warrantyMonths;
     }
 
-    public int getWarrantyPeriod() { return warrantyPeriod; }
+    public int getWarrantyMonths() { return warrantyMonths; }
 }
 
 class Clothing extends Product {
     private String size;
-    private String material;
+    private String fabric;
 
-    public Clothing(String name, double price, String size, String material) {
+    public Clothing(String name, double price, String size, String fabric) {
         super(name, price, "Clothing");
         this.size = size;
-        this.material = material;
+        this.fabric = fabric;
     }
 
     public String getSize() { return size; }
-    public String getMaterial() { return material; }
+    public String getFabric() { return fabric; }
 }
 
 class Grocery extends Product {
-    private String expiryDate;
-    private boolean perishable;
+    private String expirationDate;
+    private boolean isPerishable;
 
-    public Grocery(String name, double price, String expiryDate, boolean perishable) {
+    public Grocery(String name, double price, String expirationDate, boolean isPerishable) {
         super(name, price, "Grocery");
-        this.expiryDate = expiryDate;
-        this.perishable = perishable;
+        this.expirationDate = expirationDate;
+        this.isPerishable = isPerishable;
     }
 
-    public String getExpiryDate() { return expiryDate; }
-    public boolean isPerishable() { return perishable; }
+    public String getExpirationDate() { return expirationDate; }
+    public boolean isPerishable() { return isPerishable; }
 }
 
-// Base User class
-class User {
+abstract class User {
     private String username;
-    private String email;
 
-    public User(String username, String email) {
+    public User(String username) {
         this.username = username;
-        this.email = email;
     }
 
-    public String getUsername() { return username; }
-    public String getEmail() { return email; }
+    public String getUsername() {
+        return username;
+    }
 }
 
-// Subclass Customer
 class Customer extends User {
     private List<Product> cart;
 
-    public Customer(String username, String email) {
-        super(username, email);
+    public Customer(String username) {
+        super(username);
         this.cart = new ArrayList<>();
     }
 
     public void addToCart(Product product) {
         cart.add(product);
-        System.out.println(product.getName() + " added to the cart.");
+        System.out.println(product.getName() + " has been added to your cart.");
     }
 
-    public void viewCart() {
-        System.out.println("Cart Items:");
-        cart.forEach(System.out::println);
+    public void showCart() {
+        System.out.println("\nYour Cart:");
+        if (cart.isEmpty()) {
+            System.out.println("Your cart is empty.");
+        } else {
+            cart.forEach(System.out::println);
+        }
     }
 
     public List<Product> getCart() { return cart; }
 }
 
-// Subclass Admin
 class Admin extends User {
-    public Admin(String username, String email) {
-        super(username, email);
+    public Admin(String username) {
+        super(username);
     }
 
-    public void addProduct(List<Product> products, Product product) {
-        products.add(product);
-        System.out.println(product.getName() + " added to the product list.");
+    public void addProduct(List<Product> productList, Product product) {
+        productList.add(product);
+        System.out.println(product.getName() + " has been added to the inventory.");
     }
 
-    public void removeProduct(List<Product> products, Product product) {
-        products.remove(product);
-        System.out.println(product.getName() + " removed from the product list.");
+    public void removeProduct(List<Product> productList, String productName) {
+        Product productToRemove = productList.stream()
+            .filter(product -> product.getName().equalsIgnoreCase(productName))
+            .findFirst()
+            .orElse(null);
+
+        if (productToRemove != null) {
+            productList.remove(productToRemove);
+            System.out.println(productName + " has been removed from the inventory.");
+        } else {
+            System.out.println(productName + " not found in the inventory.");
+        }
     }
 }
 
-// Order class
 class Order {
     private List<Product> orderItems;
     private double totalPrice;
@@ -129,7 +134,6 @@ class Order {
 
     public void addProduct(Product product) {
         orderItems.add(product);
-        System.out.println(product.getName() + " added to the order.");
     }
 
     public void calculateTotal() {
@@ -140,67 +144,142 @@ class Order {
         totalPrice += totalPrice * taxRate;
     }
 
-    public void applyShippingFee(double fee) {
+    public void addShippingFee(double fee) {
         totalPrice += fee;
     }
 
-    public double getTotalPrice() {
-        return totalPrice;
-    }
+    public double getTotalPrice() { return totalPrice; }
 
-    public void displayOrderItems() {
-        System.out.println("Order Items:");
-        orderItems.forEach(System.out::println);
+    public void printOrderDetails() {
+        System.out.println("\nOrder Summary:");
+        for (Product item : orderItems) {
+            System.out.println(item);
+        }
+        System.out.println("Total Price: $" + String.format("%.2f", totalPrice));
     }
 }
 
-// Main E-commerce Platform
 public class ECommercePlatform {
     public static void main(String[] args) {
-        // Product List
-        List<Product> products = new ArrayList<>();
-        products.add(new Electronics("Laptop", 1200, 24));
-        products.add(new Clothing("Jeans", 50, "L", "Denim"));
-        products.add(new Grocery("Apple", 2, "2024-12-31", true));
+        Scanner scanner = new Scanner(System.in);
 
-        // Admin functionality
-        Admin admin = new Admin("admin1", "admin@ecommerce.com");
-        admin.addProduct(products, new Electronics("Smartphone", 800, 12));
-        admin.removeProduct(products, products.get(0)); // Remove Laptop
+        List<Product> products = new ArrayList<>(Arrays.asList(
+            new Electronics("Smartphone", 699.99, 12),
+            new Electronics("Laptop", 1299.99, 24),
+            new Clothing("Jeans", 49.99, "M", "Denim"),
+            new Clothing("T-Shirt", 19.99, "L", "Cotton"),
+            new Grocery("Milk", 3.99, "2024-12-31", true),
+            new Grocery("Bread", 2.49, "2024-12-15", false)
+        ));
 
-        // Customer functionality
-        Customer customer = new Customer("john_doe", "john@example.com");
-        customer.addToCart(products.get(0)); // Add Smartphone
-        customer.addToCart(products.get(1)); // Add Jeans
-        customer.viewCart();
+        Admin admin = new Admin("admin_user");
+        Customer customer = new Customer("john_doe");
 
-        // Filter Products by Category
-        List<Product> electronics = products.stream()
-            .filter(product -> product.getCategory().equalsIgnoreCase("Electronics"))
-            .collect(Collectors.toList());
-        System.out.println("\nFiltered Electronics:");
-        electronics.forEach(System.out::println);
+        while (true) {
+            System.out.println("\nWelcome to Shopify!");
+            System.out.println("1. View Products by Category");
+            System.out.println("2. View Cart");
+            System.out.println("3. Checkout");
+            System.out.println("4. Sort Products");
+            System.out.println("5. Admin: Add Product");
+            System.out.println("6. Admin: Remove Product");
+            System.out.println("7. Exit");
+            System.out.print("Choose an option: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine();
 
-        // Sort Products by Price
-        products.sort(Comparator.comparingDouble(Product::getPrice));
-        System.out.println("\nSorted Products by Price:");
-        products.forEach(System.out::println);
+            switch (choice) {
+                case 1:
+                    System.out.println("\nAvailable Categories: Electronics, Clothing, Grocery");
+                    System.out.print("Enter a category: ");
+                    String category = scanner.nextLine();
 
-        // Search for a Product
-        String searchKeyword = "Jeans";
-        List<Product> searchResults = products.stream()
-            .filter(product -> product.getName().toLowerCase().contains(searchKeyword.toLowerCase()))
-            .collect(Collectors.toList());
-        System.out.println("\nSearch Results for '" + searchKeyword + "':");
-        searchResults.forEach(System.out::println);
+                    List<Product> filteredProducts = products.stream()
+                        .filter(p -> p.getCategory().equalsIgnoreCase(category))
+                        .collect(Collectors.toList());
 
-        // Create an Order
-        Order order = new Order();
-        customer.getCart().forEach(order::addProduct);
-        order.calculateTotal();
-        order.applyTax(0.1); // 10% Tax
-        order.applyShippingFee(20); // $20 Shipping Fee
-        System.out.println("\nOrder Total: $" + order.getTotalPrice());
-        order.displayOrderItems();
+                    if (filteredProducts.isEmpty()) {
+                        System.out.println("No products found in this category.");
+                    } else {
+                        System.out.println("\nAvailable Products:");
+                        for (int i = 0; i < filteredProducts.size(); i++) {
+                            System.out.println((i + 1) + ". " + filteredProducts.get(i));
+                        }
+
+                        System.out.print("Enter the number of the product to add to your cart (or 0 to go back): ");
+                        int productChoice = scanner.nextInt();
+                        if (productChoice > 0 && productChoice <= filteredProducts.size()) {
+                            customer.addToCart(filteredProducts.get(productChoice - 1));
+                        }
+                    }
+                    break;
+
+                case 2:
+                    customer.showCart();
+                    break;
+
+                case 3:
+                    if (customer.getCart().isEmpty()) {
+                        System.out.println("\nYour cart is empty. Please add items before checking out.");
+                    } else {
+                        Order order = new Order();
+                        for (Product product : customer.getCart()) {
+                            order.addProduct(product);
+                        }
+                        order.calculateTotal();
+                        order.applyTax(0.08);
+                        order.addShippingFee(10.00);
+                        order.printOrderDetails();
+
+                        customer.getCart().clear();
+                        System.out.println("Thank you for your purchase!");
+                    }
+                    break;
+
+                case 4:
+                    System.out.println("\nSort Products By:");
+                    System.out.println("1. Price (Low to High)");
+                    System.out.println("2. Name (A to Z)");
+                    System.out.print("Enter your choice: ");
+                    int sortChoice = scanner.nextInt();
+                    scanner.nextLine();
+
+                    if (sortChoice == 1) {
+                        products.sort(Comparator.comparingDouble(Product::getPrice));
+                    } else if (sortChoice == 2) {
+                        products.sort(Comparator.comparing(Product::getName));
+                    } else {
+                        System.out.println("Invalid choice. Returning to main menu.");
+                    }
+
+                    System.out.println("\nSorted Products:");
+                    products.forEach(System.out::println);
+                    break;
+
+                case 5:
+                    System.out.print("Enter product name: ");
+                    String name = scanner.nextLine();
+                    System.out.print("Enter product price: ");
+                    double price = scanner.nextDouble();
+                    scanner.nextLine();
+                    System.out.print("Enter product category: ");
+                    String productCategory = scanner.nextLine();
+                    admin.addProduct(products, new Product(name, price, productCategory));
+                    break;
+
+                case 6:
+                    System.out.print("Enter the name of the product to remove: ");
+                    String productName = scanner.nextLine();
+                    admin.removeProduct(products, productName);
+                    break;
+
+                case 7:
+                    System.out.println("Thank you for visiting! Goodbye!");
+                    return;
+
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
     }
 }
